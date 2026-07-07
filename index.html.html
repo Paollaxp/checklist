@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#2D3277">
+<title>Vistoria · Mercado Livre</title>
+<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22Vistoria%20OLLA%22%2C%22short_name%22%3A%22Vistoria%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%232D3277%22%2C%22theme_color%22%3A%22%232D3277%22%7D">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<style>
+:root{
+  --ml-yellow:#FFE600; --ml-yellow-d:#E5CF00;
+  --ink:#2D3277; --ink-2:#3A3F8F;
+  --red:#E53935; --red-bg:#FDECEA;
+  --green:#2E9E5B; --green-bg:#E7F5EC;
+  --bg:#F4F5F9; --card:#FFFFFF; --line:#E2E4ED; --muted:#8A8FA8; --text:#1C1E2E;
+  --shadow:0 2px 12px rgba(45,50,119,.08);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;overscroll-behavior-y:none;}
+body{max-width:520px;margin:0 auto;min-height:100vh;position:relative;padding-bottom:76px;}
+
+/* ---------- TOP BAR ---------- */
+.topbar{position:sticky;top:0;z-index:40;background:var(--ink);
+  padding:12px 16px;display:flex;align-items:center;gap:10px;
+  box-shadow:0 2px 8px rgba(0,0,0,.12);}
+.topbar .brand{width:34px;height:34px;border-radius:9px;background:var(--ml-yellow);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.topbar .brand svg{width:22px;height:22px;}
+.topbar .tt{flex:1;min-width:0;}
+.topbar .tt h1{font-size:15px;font-weight:600;color:#fff;margin:0;line-height:1.2;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.topbar .tt p{font-size:11px;color:#B9BCE0;margin:1px 0 0;line-height:1.2;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.topbar .gear{width:38px;height:38px;border-radius:9px;border:none;background:rgba(255,255,255,.12);
+  color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+/* ---------- SCREENS ---------- */
+.screen{display:none;padding:16px;animation:fade .2s ease;}
+.screen.active{display:block;}
+@keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+
+.sec-label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.04em;margin:0 0 8px;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:14px;box-shadow:var(--shadow);margin-bottom:14px;}
+
+/* ---------- FORM ELEMENTS ---------- */
+label.fld{display:block;font-size:13px;font-weight:600;color:var(--text);margin:0 0 6px;}
+input[type=text],input[type=number],textarea,select{
+  width:100%;font-size:16px;padding:12px 14px;border:1.5px solid var(--line);
+  border-radius:11px;background:#fff;color:var(--text);font-family:inherit;}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--ink);}
+textarea{resize:vertical;min-height:64px;line-height:1.4;}
+.row{display:flex;gap:10px;}
+.row>*{flex:1;min-width:0;}
+
+/* ---------- BUTTONS ---------- */
+.btn{width:100%;font-size:16px;font-weight:600;padding:14px;border-radius:12px;
+  border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;
+  justify-content:center;gap:8px;transition:transform .06s;}
+.btn:active{transform:scale(.985);}
+.btn-primary{background:var(--ml-yellow);color:var(--ink);}
+.btn-dark{background:var(--ink);color:#fff;}
+.btn-ghost{background:#fff;color:var(--ink);border:1.5px solid var(--line);}
+.btn-sm{font-size:14px;padding:10px 12px;}
+.btn svg{width:19px;height:19px;}
+
+/* ---------- BOTTOM NAV ---------- */
+.bottomnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;
+  max-width:520px;background:#fff;border-top:1px solid var(--line);
+  display:flex;z-index:40;box-shadow:0 -2px 12px rgba(45,50,119,.06);}
+.bottomnav button{flex:1;border:none;background:none;padding:9px 0 8px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--muted);
+  font-family:inherit;font-size:11px;font-weight:600;}
+.bottomnav button svg{width:23px;height:23px;}
+.bottomnav button.on{color:var(--ink);}
+.bottomnav button.on .navdot{opacity:1;}
+.navdot{width:5px;height:5px;border-radius:50%;background:var(--ml-yellow-d);opacity:0;margin-top:1px;}
+
+/* ---------- GRID (MALHA) ---------- */
+.gridwrap{overflow:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);
+  border-radius:12px;background:#fafbff;padding:8px;max-height:52vh;}
+table.mesh{border-collapse:separate;border-spacing:3px;margin:0 auto;}
+table.mesh th{font-size:11px;font-weight:700;color:var(--ink);background:#EEF0FB;
+  min-width:30px;height:26px;border-radius:5px;text-align:center;position:sticky;}
+table.mesh th.corner{background:var(--ink);color:#fff;left:0;z-index:3;}
+table.mesh th.rowh{left:0;z-index:2;background:#E4E7F7;}
+table.mesh td{padding:0;}
+.cellbtn{width:34px;height:30px;border:1px solid var(--line);border-radius:6px;background:#fff;
+  font-size:9px;color:#A8ADC6;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-weight:600;transition:all .1s;padding:0;}
+.cellbtn:active{transform:scale(.9);}
+.cellbtn.sel{background:var(--ml-yellow);border-color:var(--ml-yellow-d);color:var(--ink);}
+.cellbtn.haspts{border-color:var(--ink);color:var(--ink);}
+.cellbtn.haspts::after{content:"";position:absolute;margin-top:-16px;margin-left:12px;
+  width:6px;height:6px;border-radius:50%;background:var(--red);}
+
+/* ---------- PILL / BADGE ---------- */
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;
+  padding:4px 10px;border-radius:20px;}
+.pill-red{background:var(--red-bg);color:var(--red);}
+.pill-green{background:var(--green-bg);color:var(--green);}
+.pill-blue{background:#E8EAFB;color:var(--ink);}
+
+/* ---------- PHOTO ---------- */
+.photobox{position:relative;border:2px dashed var(--line);border-radius:12px;
+  background:#fafbff;min-height:150px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:6px;overflow:hidden;cursor:pointer;}
+.photobox.filled{border-style:solid;border-color:var(--green);}
+.photobox img{width:100%;height:100%;max-height:260px;object-fit:cover;display:block;}
+.photobox .ph-label{font-size:13px;color:var(--muted);text-align:center;}
+.photobox .ph-ico{width:36px;height:36px;color:var(--muted);}
+.photo-actions{position:absolute;top:8px;right:8px;display:flex;gap:6px;}
+.photo-actions button{width:32px;height:32px;border-radius:8px;border:none;
+  background:rgba(0,0,0,.55);color:#fff;display:flex;align-items:center;justify-content:center;}
+.photo-actions button svg{width:17px;height:17px;}
+
+/* ---------- STATUS TOGGLE ---------- */
+.stseg{display:flex;gap:8px;}
+.stseg button{flex:1;padding:12px;border-radius:11px;border:1.5px solid var(--line);
+  background:#fff;font-weight:600;font-size:14px;color:var(--muted);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:6px;font-family:inherit;}
+.stseg button svg{width:17px;height:17px;}
+.stseg button.on-red{background:var(--red-bg);border-color:var(--red);color:var(--red);}
+.stseg button.on-green{background:var(--green-bg);border-color:var(--green);color:var(--green);}
+
+/* ---------- LISTS ---------- */
+.item{display:flex;gap:11px;align-items:center;padding:11px;border:1px solid var(--line);
+  border-radius:12px;background:#fff;margin-bottom:9px;}
+.item .thumb{width:46px;height:46px;border-radius:9px;object-fit:cover;flex-shrink:0;background:#eef;}
+.item .thumb.nope{display:flex;align-items:center;justify-content:center;color:#B8BDD6;}
+.item .meta{flex:1;min-width:0;}
+.item .meta .loc{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.item .meta .dsc{font-size:12px;color:var(--muted);line-height:1.3;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.item .del{width:32px;height:32px;border:none;background:none;color:#C2C6DC;flex-shrink:0;}
+.item .del svg{width:18px;height:18px;}
+
+/* ---------- ENV CHIPS ---------- */
+.envchips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;}
+.envchip{white-space:nowrap;padding:8px 14px;border-radius:20px;border:1.5px solid var(--line);
+  background:#fff;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;flex-shrink:0;}
+.envchip.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+.envchip.add{color:var(--ink);border-style:dashed;}
+
+/* ---------- STAT CARDS ---------- */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+.stat{background:#fff;border:1px solid var(--line);border-radius:13px;padding:13px 10px;text-align:center;}
+.stat .n{font-size:26px;font-weight:700;line-height:1;}
+.stat .l{font-size:11px;color:var(--muted);margin-top:5px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;}
+.stat.r .n{color:var(--red);} .stat.g .n{color:var(--green);} .stat.b .n{color:var(--ink);}
+
+/* ---------- PROGRESS BAR ---------- */
+.pbar{height:10px;border-radius:6px;background:var(--red-bg);overflow:hidden;margin:4px 0 2px;}
+.pbar>div{height:100%;background:var(--green);border-radius:6px;transition:width .3s;}
+
+/* ---------- MODAL ---------- */
+.modal{position:fixed;inset:0;background:rgba(28,30,46,.5);z-index:60;display:none;
+  align-items:flex-end;justify-content:center;}
+.modal.open{display:flex;}
+.sheet{background:#fff;width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:20px 18px 26px;
+  animation:slideup .25s ease;max-height:88vh;overflow-y:auto;}
+@keyframes slideup{from{transform:translateY(100%);}to{transform:none;}}
+.sheet h3{margin:0 0 4px;font-size:18px;color:var(--ink);}
+.sheet .sub{font-size:13px;color:var(--muted);margin:0 0 16px;}
+.grabber{width:40px;height:4px;border-radius:3px;background:var(--line);margin:0 auto 14px;}
+
+.hint{font-size:12px;color:var(--muted);line-height:1.45;margin:6px 0 0;}
+.empty{text-align:center;padding:32px 16px;color:var(--muted);}
+.empty svg{width:44px;height:44px;opacity:.4;margin-bottom:8px;}
+.empty p{font-size:14px;margin:0;}
+.divider{height:1px;background:var(--line);margin:14px 0;}
+.spacer{height:8px;}
+</style>
+</head>
+<body>
+<!-- ============ TOP BAR ============ -->
+<div class="topbar">
+  <div class="brand">
+    <svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h10" stroke="#2D3277" stroke-width="2.4" stroke-linecap="round"/></svg>
+  </div>
+  <div class="tt">
+    <h1 id="tbTitle">Vistoria</h1>
+    <p id="tbSub">Configure o projeto</p>
+  </div>
+  <button class="gear" onclick="openConfig()" aria-label="Configurações">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="#fff" stroke-width="2"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-2.82 1.17V21a2 2 0 11-4 0v-.09A1.65 1.65 0 006.6 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15v-.09A1.65 1.65 0 003.43 12H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 6.6a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 3.43V3a2 2 0 114 0v.09a1.65 1.65 0 002.82 1.17 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0021 9h.09" stroke="#fff" stroke-width="1.6"/></svg>
+  </button>
+</div>
+
+<!-- ============ SCREEN: VISTORIA ============ -->
+<section class="screen active" id="scVistoria">
+  <div class="envchips" id="envChips"></div>
+
+  <div class="card">
+    <p class="sec-label">1 · Local do apontamento</p>
+    <button class="btn btn-ghost" id="pickLocBtn" onclick="goMap()">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 21s7-6.5 7-11a7 7 0 10-14 0c0 4.5 7 11 7 11z" stroke="#2D3277" stroke-width="2"/><circle cx="12" cy="10" r="2.4" stroke="#2D3277" stroke-width="2"/></svg>
+      <span id="locBtnTxt">Tocar para escolher no mapa</span>
+    </button>
+  </div>
+
+  <div class="card">
+    <p class="sec-label">2 · Foto</p>
+    <div class="photobox" id="photoBox" onclick="triggerCamera()">
+      <svg class="ph-ico" viewBox="0 0 24 24" fill="none"><path d="M4 8h3l1.5-2h7L17 8h3v11H4V8z" stroke="#8A8FA8" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.2" stroke="#8A8FA8" stroke-width="1.8"/></svg>
+      <span class="ph-label">Tocar para usar a câmera</span>
+    </div>
+    <input type="file" id="camInput" accept="image/*" capture="environment" style="display:none">
+  </div>
+
+  <div class="card">
+    <p class="sec-label">3 · Descrição</p>
+    <textarea id="descInput" placeholder="Ex: junta com retração térmica, revisar preenchimento"></textarea>
+    <div class="spacer"></div>
+    <label class="fld">Empresa / responsável <span style="color:var(--muted);font-weight:400">(opcional)</span></label>
+    <input type="text" id="respInput" placeholder="Ex: Construtora XPTO">
+  </div>
+
+  <div class="card">
+    <p class="sec-label">4 · Status</p>
+    <div class="stseg">
+      <button id="stPend" class="on-red" onclick="setStatus('PENDENTE')">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 8v4l2.5 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        Pendente
+      </button>
+      <button id="stConc" onclick="setStatus('CONCLUIDO')">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M8 12.5l2.5 2.5L16 9.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Concluído
+      </button>
+    </div>
+  </div>
+
+  <div class="card" id="fixCard">
+    <p class="sec-label">5 · Foto da correção <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;">(opcional)</span></p>
+    <div class="photobox" id="fixPhotoBox" onclick="triggerFixCamera()" style="min-height:120px;">
+      <svg class="ph-ico" viewBox="0 0 24 24" fill="none"><path d="M9 12.5l2.5 2.5L16 9.5" stroke="#8A8FA8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 8h3l1.5-2h7L17 8h3v11H4V8z" stroke="#8A8FA8" stroke-width="1.8" stroke-linejoin="round"/></svg>
+      <span class="ph-label">Foto do item corrigido</span>
+    </div>
+    <input type="file" id="fixCamInput" accept="image/*" capture="environment" style="display:none">
+    <div class="spacer"></div>
+    <label class="fld">Data da verificação</label>
+    <input type="date" id="fixDateInput">
+  </div>
+
+  <button class="btn btn-primary" onclick="addPoint()">
+    <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#2D3277" stroke-width="2.4" stroke-linecap="round"/></svg>
+    <span id="addBtnTxt">Adicionar apontamento</span>
+  </button>
+  <div class="spacer"></div>
+  <button class="btn btn-ghost" id="cancelEditBtn" style="display:none;" onclick="cancelEdit()">Cancelar edição</button>
+  <div class="spacer"></div>
+  <p class="hint" id="vistoriaHint"></p>
+</section>
+
+<!-- ============ SCREEN: MAPA ============ -->
+<section class="screen" id="scMap">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+    <p class="sec-label" style="margin:0;">Mapa de <span id="axisNameLbl">pilares</span></p>
+    <button class="btn btn-ghost btn-sm" style="width:auto;" onclick="backToVistoria()">
+      <svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M15 18l-6-6 6-6" stroke="#2D3277" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Voltar
+    </button>
+  </div>
+  <p class="hint" style="margin:0 0 10px;">Toque na interseção onde o apontamento foi feito. O ponto vermelho indica locais que já têm registros.</p>
+  <div class="gridwrap"><div id="meshHost"></div></div>
+  <div class="spacer"></div>
+  <div id="mapSelInfo" style="display:none;">
+    <div class="card" style="margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="pill pill-blue"><svg viewBox="0 0 24 24" width="14" height="14" fill="none"><path d="M12 21s7-6.5 7-11a7 7 0 10-14 0c0 4.5 7 11 7 11z" stroke="#2D3277" stroke-width="2"/></svg><span id="mapSelName">—</span></span>
+        <span style="flex:1;"></span>
+        <span style="font-size:12px;color:var(--muted);"><b id="mapSelCount">0</b> registro(s) aqui</span>
+      </div>
+    </div>
+    <button class="btn btn-dark" onclick="confirmLoc()">Usar este local</button>
+  </div>
+</section>
+
+<!-- ============ SCREEN: APONTAMENTOS ============ -->
+<section class="screen" id="scList">
+  <div class="envchips" id="envChipsList"></div>
+  <div class="stats" id="listStats"></div>
+  <div id="pointsList"></div>
+</section>
+
+<!-- ============ SCREEN: RESUMO ============ -->
+<section class="screen" id="scResumo">
+  <p class="sec-label">Resumo geral do projeto</p>
+  <div class="card" id="resumoHead"></div>
+  <div class="card">
+    <p class="sec-label">Por ambiente</p>
+    <div id="resumoAmb"></div>
+  </div>
+  <button class="btn btn-primary" onclick="exportExcel()">
+    <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4" stroke="#2D3277" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v3h16v-3" stroke="#2D3277" stroke-width="2.2" stroke-linecap="round"/></svg>
+    Exportar Excel (formato Mercado Livre)
+  </button>
+  <p class="hint">Gera um arquivo .xlsx com uma aba por ambiente, fotos embutidas nas células, contadores e a aba RESUMO — pronto para virar PDF.</p>
+</section>
+
+<!-- ============ BOTTOM NAV ============ -->
+<nav class="bottomnav">
+  <button id="navVist" class="on" onclick="showScreen('scVistoria','navVist')">
+    <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+    Novo<div class="navdot"></div>
+  </button>
+  <button id="navList" onclick="showScreen('scList','navList');renderList();">
+    <svg viewBox="0 0 24 24" fill="none"><path d="M8 6h12M8 12h12M8 18h12M3.5 6h.01M3.5 12h.01M3.5 18h.01" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+    Registros<div class="navdot"></div>
+  </button>
+  <button id="navRes" onclick="showScreen('scResumo','navRes');renderResumo();">
+    <svg viewBox="0 0 24 24" fill="none"><path d="M4 19V5M4 19h16M8 16v-5M13 16V8M18 16v-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+    Resumo<div class="navdot"></div>
+  </button>
+</nav>
+
+<!-- ============ MODAL: CONFIG ============ -->
+<div class="modal" id="configModal">
+  <div class="sheet">
+    <div class="grabber"></div>
+    <h3>Configuração do projeto</h3>
+    <p class="sub">Defina a malha de referência e os ambientes desta obra.</p>
+
+    <label class="fld">Nome da obra / projeto</label>
+    <input type="text" id="cfgProject" placeholder="Ex: RS03 - Mercado Livre">
+    <div class="spacer"></div>
+    <label class="fld">Local</label>
+    <input type="text" id="cfgLocal" placeholder="Ex: Guaíba - RS">
+
+    <div class="divider"></div>
+    <p class="sec-label" style="margin-bottom:10px;">Malha de referência</p>
+    <label class="fld">Nome do eixo (o que cada ponto representa)</label>
+    <input type="text" id="cfgAxisName" placeholder="Ex: Pilar" value="Pilar">
+    <div class="spacer"></div>
+    <div class="row">
+      <div>
+        <label class="fld">Coluna inicial</label>
+        <input type="text" id="cfgColStart" maxlength="2" placeholder="A" value="A" style="text-transform:uppercase">
+      </div>
+      <div>
+        <label class="fld">Coluna final</label>
+        <input type="text" id="cfgColEnd" maxlength="2" placeholder="P" value="P" style="text-transform:uppercase">
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <div class="row">
+      <div>
+        <label class="fld">Linha inicial</label>
+        <input type="number" id="cfgRowStart" placeholder="1" value="1" min="1">
+      </div>
+      <div>
+        <label class="fld">Linha final</label>
+        <input type="number" id="cfgRowEnd" placeholder="34" value="34" min="1">
+      </div>
+    </div>
+    <p class="hint" id="cfgMeshInfo"></p>
+
+    <div class="divider"></div>
+    <p class="sec-label" style="margin-bottom:10px;">Ambientes (abas do relatório)</p>
+    <div id="cfgEnvList"></div>
+    <div class="row" style="margin-top:8px;">
+      <input type="text" id="cfgNewEnv" placeholder="Ex: PISO, BANHEIROS...">
+      <button class="btn btn-ghost btn-sm" style="flex:0 0 auto;width:auto;padding:0 16px;" onclick="cfgAddEnv()">Adicionar</button>
+    </div>
+
+    <div class="divider"></div>
+    <button class="btn btn-primary" onclick="saveConfig()">Salvar e começar</button>
+    <div class="spacer"></div>
+    <button class="btn btn-ghost" onclick="closeConfig()">Cancelar</button>
+
+    <div class="divider"></div>
+    <p class="sec-label" style="margin-bottom:4px;">Backup da vistoria</p>
+    <p class="hint" style="margin:0 0 10px;">Exporte um arquivo de segurança. Ele guarda todos os apontamentos e fotos, e permite retomar a vistoria depois (em outro dia ou celular) para lançar as correções.</p>
+    <div class="row">
+      <button class="btn btn-dark btn-sm" onclick="exportBackup()">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v3h16v-3" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
+        Exportar backup
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="triggerImport()">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none"><path d="M12 21V9m0 0l-4 4m4-4l4 4" stroke="#2D3277" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 7V4h16v3" stroke="#2D3277" stroke-width="2.2" stroke-linecap="round"/></svg>
+        Importar backup
+      </button>
+    </div>
+    <input type="file" id="importInput" accept="application/json,.json" style="display:none" onchange="handleImportFile(event)">
+
+    <div class="divider"></div>
+    <button class="btn btn-ghost" style="color:var(--red);border-color:#F3C6C4;" onclick="resetAll()">Apagar tudo e recomeçar</button>
+  </div>
+</div>
+
+<!-- ============ MODAL: ADD ENV (from chip) ============ -->
+<div class="modal" id="envModal">
+  <div class="sheet">
+    <div class="grabber"></div>
+    <h3>Novo ambiente</h3>
+    <p class="sub">Cada ambiente vira uma aba no relatório final.</p>
+    <label class="fld">Nome do ambiente</label>
+    <input type="text" id="quickEnvName" placeholder="Ex: VESTIÁRIOS">
+    <div class="spacer"></div>
+    <button class="btn btn-primary" onclick="quickAddEnv()">Criar ambiente</button>
+    <div class="spacer"></div>
+    <button class="btn btn-ghost" onclick="document.getElementById('envModal').classList.remove('open')">Cancelar</button>
+  </div>
+</div>
+
+<div id="toast" style="position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
+  background:var(--ink);color:#fff;padding:11px 20px;border-radius:24px;font-size:14px;
+  font-weight:500;z-index:80;opacity:0;transition:opacity .2s;pointer-events:none;
+  box-shadow:0 4px 16px rgba(0,0,0,.2);max-width:90%;text-align:center;"></div>
+
+<script>
+/* ==================================================================
+   VISTORIA OLLA · MERCADO LIVRE — lógica
+   Estado persistido em IndexedDB (capacidade alta p/ fotos).
+   ================================================================== */
+var LS_KEY = 'vistoria_dom_v1';   // chave legada (migração automática)
+var IDB_NAME='vistoria_olla', IDB_STORE='estado', IDB_KEY='atual';
+var state = {
+  project:'', local:'', axisName:'Pilar',
+  colStart:'A', colEnd:'P', rowStart:1, rowEnd:34,
+  envs:[], activeEnv:null,
+  points:[]  // {id, env, loc, desc, resp, status, photo, fixPhoto, fixDate}
+};
+
+/* draft do apontamento atual */
+var draft = { loc:null, photo:null, status:'PENDENTE', fixPhoto:null, fixDate:null };
+var editingId = null;  // id do registro em edição (null = novo)
+var mapTempSel = null;
+
+/* ---------- persistência: IndexedDB ---------- */
+var _db=null;
+function idbOpen(){
+  return new Promise(function(res,rej){
+    if(_db){ res(_db); return; }
+    var req=indexedDB.open(IDB_NAME,1);
+    req.onupgradeneeded=function(e){ var db=e.target.result; if(!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE); };
+    req.onsuccess=function(e){ _db=e.target.result; res(_db); };
+    req.onerror=function(e){ rej(e.target.error); };
+  });
+}
+var _saveTimer=null, _saving=false;
+/* save() mantém a mesma assinatura usada no app todo; grava com debounce */
+function save(){
+  clearTimeout(_saveTimer);
+  _saveTimer=setTimeout(doSave, 250);
+}
+function doSave(){
+  idbOpen().then(function(db){
+    var tx=db.transaction(IDB_STORE,'readwrite');
+    tx.objectStore(IDB_STORE).put(JSON.parse(JSON.stringify(state)), IDB_KEY);
+    tx.oncomplete=function(){};
+    tx.onerror=function(e){ console.warn('save err',e); toast('Erro ao salvar — verifique espaço do celular'); };
+  }).catch(function(e){ console.warn(e); });
+}
+function load(){
+  return new Promise(function(res){
+    idbOpen().then(function(db){
+      var tx=db.transaction(IDB_STORE,'readonly');
+      var rq=tx.objectStore(IDB_STORE).get(IDB_KEY);
+      rq.onsuccess=function(){
+        if(rq.result){ state=rq.result; res(true); }
+        else{ migrateFromLS().then(res); }
+      };
+      rq.onerror=function(){ migrateFromLS().then(res); };
+    }).catch(function(){ migrateFromLS().then(res); });
+  });
+}
+/* migra dados antigos do localStorage (se existirem) uma única vez */
+function migrateFromLS(){
+  return new Promise(function(res){
+    try{
+      var raw=localStorage.getItem(LS_KEY);
+      if(raw){ state=JSON.parse(raw); doSave(); try{localStorage.removeItem(LS_KEY);}catch(e){} res(true); return; }
+    }catch(e){}
+    res(false);
+  });
+}
+function clearStore(){
+  return idbOpen().then(function(db){
+    return new Promise(function(res){
+      var tx=db.transaction(IDB_STORE,'readwrite');
+      tx.objectStore(IDB_STORE).delete(IDB_KEY);
+      tx.oncomplete=res; tx.onerror=res;
+    });
+  });
+}
+
+/* ---------- helpers de coluna (A..Z, AA..) ---------- */
+function colToNum(s){ s=(s||'').toUpperCase(); var n=0; for(var i=0;i<s.length;i++){ n=n*26+(s.charCodeAt(i)-64); } return n; }
+function numToCol(n){ var s=''; while(n>0){ var r=(n-1)%26; s=String.fromCharCode(65+r)+s; n=Math.floor((n-1)/26); } return s; }
+function colRange(){ var a=colToNum(state.colStart), b=colToNum(state.colEnd); if(b<a){var t=a;a=b;b=t;} var out=[]; for(var i=a;i<=b;i++) out.push(numToCol(i)); return out; }
+function rowRange(){ var a=+state.rowStart, b=+state.rowEnd; if(b<a){var t=a;a=b;b=t;} var out=[]; for(var i=a;i<=b;i++) out.push(i); return out; }
+
+/* ---------- toast ---------- */
+var toastT;
+function toast(msg){ var t=document.getElementById('toast'); t.textContent=msg; t.style.opacity='1'; clearTimeout(toastT); toastT=setTimeout(function(){t.style.opacity='0';},2200); }
+
+/* ================= NAV ================= */
+function showScreen(id, navId){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.bottomnav button').forEach(function(b){b.classList.remove('on');});
+  if(navId) document.getElementById(navId).classList.add('on');
+  window.scrollTo(0,0);
+}
+function goMap(){ mapTempSel = draft.loc; renderMesh(); document.getElementById('scMap').classList.add('active'); document.getElementById('scVistoria').classList.remove('active'); updateMapSel(); window.scrollTo(0,0); }
+function backToVistoria(){ showScreen('scVistoria','navVist'); }
+function confirmLoc(){ draft.loc = mapTempSel; document.getElementById('locBtnTxt').textContent = draft.loc ? (state.axisName+' '+draft.loc) : 'Tocar para escolher no mapa'; backToVistoria(); }
+
+/* ================= TOP BAR ================= */
+function refreshTopbar(){
+  document.getElementById('tbTitle').textContent = state.project || 'Vistoria';
+  document.getElementById('tbSub').textContent = state.local ? (state.local+' · OLLA ENGENHARIA') : 'OLLA ENGENHARIA';
+}
+
+/* ================= ENV CHIPS ================= */
+function renderEnvChips(){
+  ['envChips','envChipsList'].forEach(function(hostId){
+    var host=document.getElementById(hostId); if(!host) return; host.innerHTML='';
+    state.envs.forEach(function(e){
+      var c=document.createElement('button');
+      c.className='envchip'+(e===state.activeEnv?' on':'');
+      c.textContent=e;
+      c.onclick=function(){ state.activeEnv=e; save(); renderEnvChips(); refreshVistoriaHint(); if(hostId==='envChipsList') renderList(); };
+      host.appendChild(c);
+    });
+    var add=document.createElement('button'); add.className='envchip add'; add.textContent='+ ambiente';
+    add.onclick=function(){ document.getElementById('quickEnvName').value=''; document.getElementById('envModal').classList.add('open'); };
+    host.appendChild(add);
+  });
+}
+function quickAddEnv(){
+  var v=document.getElementById('quickEnvName').value.trim(); if(!v){toast('Digite um nome');return;}
+  if(state.envs.indexOf(v)<0){ state.envs.push(v); state.activeEnv=v; save(); renderEnvChips(); refreshVistoriaHint(); }
+  document.getElementById('envModal').classList.remove('open'); toast('Ambiente "'+v+'" criado');
+}
+
+function refreshVistoriaHint(){
+  var h=document.getElementById('vistoriaHint');
+  if(!state.activeEnv){ h.textContent='Crie ou selecione um ambiente acima para começar.'; }
+  else{ var n=state.points.filter(function(p){return p.env===state.activeEnv;}).length; h.textContent='Ambiente ativo: '+state.activeEnv+' · '+n+' apontamento(s).'; }
+}
+
+/* ================= MESH (mapa) ================= */
+function renderMesh(){
+  document.getElementById('axisNameLbl').textContent = state.axisName.toLowerCase()+'es';
+  var cols=colRange(), rows=rowRange();
+  var counts={};
+  state.points.forEach(function(p){ if(p.loc){ counts[p.loc]=(counts[p.loc]||0)+1; } });
+  var tbl='<table class="mesh"><thead><tr><th class="corner">'+state.axisName.charAt(0)+'</th>';
+  cols.forEach(function(c){ tbl+='<th>'+c+'</th>'; });
+  tbl+='</tr></thead><tbody>';
+  rows.forEach(function(r){
+    tbl+='<tr><th class="rowh">'+r+'</th>';
+    cols.forEach(function(c){
+      var id=c+r;
+      var cls='cellbtn'; if(counts[id])cls+=' haspts'; if(mapTempSel===id)cls+=' sel';
+      tbl+='<td><button class="'+cls+'" data-id="'+id+'" onclick="tapCell(\''+id+'\')">'+c+r+'</button></td>';
+    });
+    tbl+='</tr>';
+  });
+  tbl+='</tbody></table>';
+  document.getElementById('meshHost').innerHTML=tbl;
+}
+function tapCell(id){
+  mapTempSel=id;
+  document.querySelectorAll('.cellbtn').forEach(function(b){ b.classList.toggle('sel', b.getAttribute('data-id')===id); });
+  updateMapSel();
+}
+function updateMapSel(){
+  var info=document.getElementById('mapSelInfo');
+  if(mapTempSel){
+    info.style.display='block';
+    document.getElementById('mapSelName').textContent=state.axisName+' '+mapTempSel;
+    var n=state.points.filter(function(p){return p.loc===mapTempSel;}).length;
+    document.getElementById('mapSelCount').textContent=n;
+  }else{ info.style.display='none'; }
+}
+
+/* ================= CÂMERA / FOTO ================= */
+function triggerCamera(){ document.getElementById('camInput').click(); }
+document.addEventListener('DOMContentLoaded',function(){
+  var inp=document.getElementById('camInput');
+  inp.addEventListener('change', function(e){
+    var file=e.target.files&&e.target.files[0]; if(!file) return;
+    downscale(file, 1280, 0.72, function(dataUrl){
+      draft.photo=dataUrl; renderPhotoBox();
+    });
+  });
+});
+function downscale(file, maxW, quality, cb){
+  var img=new Image(); var url=URL.createObjectURL(file);
+  img.onload=function(){
+    var w=img.width, h=img.height;
+    if(w>maxW){ h=Math.round(h*maxW/w); w=maxW; }
+    var cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+    cv.getContext('2d').drawImage(img,0,0,w,h);
+    URL.revokeObjectURL(url);
+    cb(cv.toDataURL('image/jpeg', quality));
+  };
+  img.onerror=function(){ URL.revokeObjectURL(url); toast('Falha ao ler a foto'); };
+  img.src=url;
+}
+function renderPhotoBox(){
+  var box=document.getElementById('photoBox');
+  if(draft.photo){
+    box.classList.add('filled');
+    box.innerHTML='<img src="'+draft.photo+'" alt="foto"><div class="photo-actions">'+
+      '<button onclick="event.stopPropagation();triggerCamera()" aria-label="Refazer"><svg viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 018-8c2.5 0 4.7 1.1 6.2 2.9M20 12a8 8 0 01-8 8c-2.5 0-4.7-1.1-6.2-2.9M18 4v3h-3M6 20v-3h3" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>'+
+      '<button onclick="event.stopPropagation();clearPhoto()" aria-label="Remover"><svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg></button>'+
+      '</div>';
+  }else{
+    box.classList.remove('filled');
+    box.innerHTML='<svg class="ph-ico" viewBox="0 0 24 24" fill="none"><path d="M4 8h3l1.5-2h7L17 8h3v11H4V8z" stroke="#8A8FA8" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.2" stroke="#8A8FA8" stroke-width="1.8"/></svg><span class="ph-label">Tocar para usar a câmera</span>';
+  }
+}
+function clearPhoto(){ draft.photo=null; renderPhotoBox(); }
+
+/* ---- foto de CORREÇÃO ---- */
+function triggerFixCamera(){ document.getElementById('fixCamInput').click(); }
+document.addEventListener('DOMContentLoaded',function(){
+  var inp=document.getElementById('fixCamInput');
+  if(inp) inp.addEventListener('change', function(e){
+    var file=e.target.files&&e.target.files[0]; if(!file) return;
+    downscale(file, 1280, 0.72, function(dataUrl){
+      draft.fixPhoto=dataUrl;
+      /* se ainda não há data de verificação, preenche com hoje */
+      var di=document.getElementById('fixDateInput');
+      if(di && !di.value){ di.value=new Date().toISOString().slice(0,10); draft.fixDate=di.value; }
+      renderFixPhotoBox();
+    });
+  });
+  var dd=document.getElementById('fixDateInput');
+  if(dd) dd.addEventListener('change', function(){ draft.fixDate=this.value||null; });
+});
+function renderFixPhotoBox(){
+  var box=document.getElementById('fixPhotoBox');
+  if(draft.fixPhoto){
+    box.classList.add('filled');
+    box.innerHTML='<img src="'+draft.fixPhoto+'" alt="foto correção"><div class="photo-actions">'+
+      '<button onclick="event.stopPropagation();triggerFixCamera()" aria-label="Refazer"><svg viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 018-8c2.5 0 4.7 1.1 6.2 2.9M20 12a8 8 0 01-8 8c-2.5 0-4.7-1.1-6.2-2.9M18 4v3h-3M6 20v-3h3" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>'+
+      '<button onclick="event.stopPropagation();clearFixPhoto()" aria-label="Remover"><svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg></button>'+
+      '</div>';
+  }else{
+    box.classList.remove('filled');
+    box.innerHTML='<svg class="ph-ico" viewBox="0 0 24 24" fill="none"><path d="M9 12.5l2.5 2.5L16 9.5" stroke="#8A8FA8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 8h3l1.5-2h7L17 8h3v11H4V8z" stroke="#8A8FA8" stroke-width="1.8" stroke-linejoin="round"/></svg><span class="ph-label">Foto do item corrigido</span>';
+  }
+}
+function clearFixPhoto(){ draft.fixPhoto=null; renderFixPhotoBox(); }
+
+/* ================= STATUS ================= */
+function setStatus(s){
+  draft.status=s;
+  document.getElementById('stPend').className = s==='PENDENTE'?'on-red':'';
+  document.getElementById('stConc').className = s==='CONCLUIDO'?'on-green':'';
+}
+
+/* ================= ADD / EDIT POINT ================= */
+function addPoint(){
+  if(!state.activeEnv){ toast('Selecione um ambiente primeiro'); return; }
+  var desc=document.getElementById('descInput').value.trim();
+  var resp=document.getElementById('respInput').value.trim();
+  if(!desc && !draft.photo){ toast('Adicione ao menos uma foto ou descrição'); return; }
+  if(editingId){
+    /* editar registro existente */
+    var p=state.points.filter(function(x){return x.id===editingId;})[0];
+    if(p){
+      p.loc=draft.loc; p.desc=desc; p.resp=resp; p.status=draft.status;
+      p.photo=draft.photo; p.fixPhoto=draft.fixPhoto; p.fixDate=draft.fixDate;
+    }
+    save(); resetForm(); refreshVistoriaHint();
+    toast('Registro atualizado ✓');
+    showScreen('scList','navList'); renderList();
+  }else{
+    /* novo registro */
+    state.points.push({
+      id:Date.now(), env:state.activeEnv, loc:draft.loc,
+      desc:desc, resp:resp, status:draft.status,
+      photo:draft.photo, fixPhoto:draft.fixPhoto, fixDate:draft.fixDate
+    });
+    save(); resetForm(); refreshVistoriaHint();
+    toast('Apontamento adicionado ✓');
+  }
+}
+function resetForm(){
+  draft={loc:null,photo:null,status:'PENDENTE',fixPhoto:null,fixDate:null};
+  editingId=null;
+  document.getElementById('descInput').value='';
+  document.getElementById('respInput').value='';
+  document.getElementById('fixDateInput').value='';
+  document.getElementById('locBtnTxt').textContent='Tocar para escolher no mapa';
+  renderPhotoBox(); renderFixPhotoBox(); setStatus('PENDENTE');
+  document.getElementById('addBtnTxt').textContent='Adicionar apontamento';
+  document.getElementById('cancelEditBtn').style.display='none';
+}
+function startEdit(id){
+  var p=state.points.filter(function(x){return x.id===id;})[0]; if(!p) return;
+  editingId=id;
+  /* garante ambiente correto ativo */
+  if(p.env!==state.activeEnv){ state.activeEnv=p.env; save(); renderEnvChips(); }
+  draft={loc:p.loc,photo:p.photo||null,status:p.status,fixPhoto:p.fixPhoto||null,fixDate:p.fixDate||null};
+  document.getElementById('descInput').value=p.desc||'';
+  document.getElementById('respInput').value=p.resp||'';
+  document.getElementById('fixDateInput').value=p.fixDate||'';
+  document.getElementById('locBtnTxt').textContent = p.loc?(state.axisName+' '+p.loc):'Tocar para escolher no mapa';
+  renderPhotoBox(); renderFixPhotoBox(); setStatus(p.status);
+  document.getElementById('addBtnTxt').textContent='Salvar alterações';
+  document.getElementById('cancelEditBtn').style.display='flex';
+  showScreen('scVistoria','navVist');
+}
+function cancelEdit(){ resetForm(); toast('Edição cancelada'); showScreen('scList','navList'); renderList(); }
+
+/* ================= LISTA ================= */
+function renderList(){
+  renderEnvChips();
+  var env=state.activeEnv;
+  var pts=state.points.filter(function(p){return p.env===env;});
+  var pend=pts.filter(function(p){return p.status==='PENDENTE';}).length;
+  var conc=pts.filter(function(p){return p.status==='CONCLUIDO';}).length;
+  document.getElementById('listStats').innerHTML=
+    '<div class="stat b"><div class="n">'+pts.length+'</div><div class="l">Total</div></div>'+
+    '<div class="stat r"><div class="n">'+pend+'</div><div class="l">Pendente</div></div>'+
+    '<div class="stat g"><div class="n">'+conc+'</div><div class="l">Concluído</div></div>';
+  var host=document.getElementById('pointsList');
+  if(pts.length===0){
+    host.innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none"><path d="M9 11l3 3 8-8" stroke="#8A8FA8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12v6a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h9" stroke="#8A8FA8" stroke-width="2" stroke-linecap="round"/></svg><p>Nenhum apontamento em '+(env||'—')+' ainda.</p></div>';
+    return;
+  }
+  var html='';
+  pts.slice().reverse().forEach(function(p){
+    var thumb = p.photo ? '<img class="thumb" src="'+p.photo+'">' : '<div class="thumb nope"><svg viewBox="0 0 24 24" width="20" height="20" fill="none"><path d="M4 8h16v11H4z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="13" r="3" stroke="currentColor" stroke-width="1.6"/></svg></div>';
+    var pill = p.status==='CONCLUIDO' ? '<span class="pill pill-green">Concluído</span>' : '<span class="pill pill-red">Pendente</span>';
+    var fixTag = p.fixPhoto ? ' <span class="pill pill-blue" style="font-size:10px;padding:2px 7px;"><svg viewBox="0 0 24 24" width="10" height="10" fill="none"><path d="M9 12.5l2.5 2.5L16 9.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>correção</span>' : '';
+    var loc = p.loc ? (state.axisName+' '+p.loc) : 'Sem local';
+    html+='<div class="item">'+thumb+
+      '<div class="meta" onclick="startEdit('+p.id+')" style="cursor:pointer;"><div class="loc">'+esc(loc)+' &nbsp;'+pill+fixTag+'</div><div class="dsc">'+esc(p.desc||'(sem descrição)')+'</div></div>'+
+      '<button class="del" onclick="startEdit('+p.id+')" aria-label="Editar" style="color:#5B62B8;"><svg viewBox="0 0 24 24" fill="none"><path d="M4 20h4l10-10-4-4L4 16v4z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M13.5 6.5l4 4" stroke="currentColor" stroke-width="1.8"/></svg></button>'+
+      '<button class="del" onclick="delPoint('+p.id+')" aria-label="Excluir"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>';
+  });
+  host.innerHTML=html;
+}
+function delPoint(id){ if(!confirm('Excluir este registro?'))return; state.points=state.points.filter(function(p){return p.id!==id;}); save(); renderList(); }
+function esc(s){ return (s||'').replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+
+/* ================= RESUMO ================= */
+function renderResumo(){
+  var total=state.points.length;
+  var conc=state.points.filter(function(p){return p.status==='CONCLUIDO';}).length;
+  var pend=total-conc;
+  var pct = total? Math.round(conc/total*100):0;
+  document.getElementById('resumoHead').innerHTML=
+    '<div class="stats" style="margin-bottom:6px;">'+
+    '<div class="stat b"><div class="n">'+total+'</div><div class="l">Total</div></div>'+
+    '<div class="stat r"><div class="n">'+pend+'</div><div class="l">Pendente</div></div>'+
+    '<div class="stat g"><div class="n">'+conc+'</div><div class="l">Concluído</div></div></div>'+
+    '<div class="pbar"><div style="width:'+pct+'%"></div></div>'+
+    '<div style="font-size:12px;color:var(--muted);text-align:right;">'+pct+'% concluído</div>';
+  var host=document.getElementById('resumoAmb'); host.innerHTML='';
+  if(state.envs.length===0){ host.innerHTML='<p class="hint">Nenhum ambiente criado.</p>'; return; }
+  state.envs.forEach(function(e){
+    var pts=state.points.filter(function(p){return p.env===e;});
+    var c=pts.filter(function(p){return p.status==='CONCLUIDO';}).length;
+    var pp = pts.length? Math.round(c/pts.length*100):0;
+    host.innerHTML+='<div style="margin-bottom:12px;">'+
+      '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px;">'+
+      '<span style="font-weight:600;">'+esc(e)+'</span>'+
+      '<span style="color:var(--muted);">'+c+'/'+pts.length+'</span></div>'+
+      '<div class="pbar"><div style="width:'+pp+'%"></div></div></div>';
+  });
+}
+
+/* ================= CONFIG ================= */
+function openConfig(){
+  document.getElementById('cfgProject').value=state.project;
+  document.getElementById('cfgLocal').value=state.local;
+  document.getElementById('cfgAxisName').value=state.axisName;
+  document.getElementById('cfgColStart').value=state.colStart;
+  document.getElementById('cfgColEnd').value=state.colEnd;
+  document.getElementById('cfgRowStart').value=state.rowStart;
+  document.getElementById('cfgRowEnd').value=state.rowEnd;
+  renderCfgEnvs(); updateMeshInfo();
+  document.getElementById('configModal').classList.add('open');
+}
+function closeConfig(){ document.getElementById('configModal').classList.remove('open'); }
+var cfgEnvsTmp=[];
+function renderCfgEnvs(){
+  cfgEnvsTmp = state.envs.slice();
+  var host=document.getElementById('cfgEnvList'); host.innerHTML='';
+  if(cfgEnvsTmp.length===0){ host.innerHTML='<p class="hint">Nenhum ambiente. Adicione abaixo.</p>'; }
+  cfgEnvsTmp.forEach(function(e,i){
+    var d=document.createElement('div');
+    d.style.cssText='display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:7px;';
+    d.innerHTML='<span style="flex:1;font-size:14px;font-weight:600;">'+esc(e)+'</span>'+
+      '<button onclick="cfgDelEnv('+i+')" style="border:none;background:none;color:var(--red);font-size:13px;font-weight:600;">Remover</button>';
+    host.appendChild(d);
+  });
+}
+function cfgAddEnv(){
+  var v=document.getElementById('cfgNewEnv').value.trim(); if(!v)return;
+  if(cfgEnvsTmp.indexOf(v)<0) cfgEnvsTmp.push(v);
+  state.envs=cfgEnvsTmp.slice(); document.getElementById('cfgNewEnv').value=''; renderCfgEnvs();
+}
+function cfgDelEnv(i){ cfgEnvsTmp.splice(i,1); state.envs=cfgEnvsTmp.slice(); renderCfgEnvs(); }
+function updateMeshInfo(){
+  var cs=document.getElementById('cfgColStart').value, ce=document.getElementById('cfgColEnd').value;
+  var rs=+document.getElementById('cfgRowStart').value, re=+document.getElementById('cfgRowEnd').value;
+  var nc=Math.abs(colToNum(ce)-colToNum(cs))+1, nr=Math.abs(re-rs)+1;
+  var an=document.getElementById('cfgAxisName').value||'Pilar';
+  document.getElementById('cfgMeshInfo').textContent='Malha: '+nc+' colunas × '+nr+' linhas = '+(nc*nr)+' pontos ('+an+' '+cs.toUpperCase()+rs+' … '+an+' '+ce.toUpperCase()+re+').';
+}
+['cfgColStart','cfgColEnd','cfgRowStart','cfgRowEnd','cfgAxisName'].forEach(function(id){
+  document.addEventListener('DOMContentLoaded',function(){
+    var el=document.getElementById(id); if(el) el.addEventListener('input',updateMeshInfo);
+  });
+});
+function saveConfig(){
+  state.project=document.getElementById('cfgProject').value.trim()||'Projeto sem nome';
+  state.local=document.getElementById('cfgLocal').value.trim();
+  state.axisName=document.getElementById('cfgAxisName').value.trim()||'Pilar';
+  state.colStart=(document.getElementById('cfgColStart').value.trim()||'A').toUpperCase();
+  state.colEnd=(document.getElementById('cfgColEnd').value.trim()||'A').toUpperCase();
+  state.rowStart=+document.getElementById('cfgRowStart').value||1;
+  state.rowEnd=+document.getElementById('cfgRowEnd').value||1;
+  state.envs=cfgEnvsTmp.slice();
+  if(state.envs.length && (!state.activeEnv || state.envs.indexOf(state.activeEnv)<0)) state.activeEnv=state.envs[0];
+  save(); refreshTopbar(); renderEnvChips(); refreshVistoriaHint(); closeConfig();
+  toast('Projeto configurado ✓');
+}
+function resetAll(){
+  if(!confirm('Isso apaga o projeto atual e TODOS os apontamentos e fotos. Continuar?')) return;
+  clearStore().then(function(){
+    try{localStorage.removeItem(LS_KEY);}catch(e){}
+    state={project:'',local:'',axisName:'Pilar',colStart:'A',colEnd:'P',rowStart:1,rowEnd:34,envs:[],activeEnv:null,points:[]};
+    closeConfig(); refreshTopbar(); renderEnvChips(); refreshVistoriaHint(); toast('Tudo limpo');
+    openConfig();
+  });
+}
+
+/* ================= BACKUP (exportar / importar vistoria) ================= */
+function exportBackup(){
+  try{
+    var data=JSON.stringify(state);
+    var blob=new Blob([data],{type:'application/json'});
+    var stamp=new Date().toISOString().slice(0,10);
+    var nm='BACKUP_'+((state.project||'vistoria').replace(/[^A-Za-z0-9]+/g,'_'))+'_'+stamp+'.json';
+    if(window.saveAs){ saveAs(blob, nm); }
+    else{
+      var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nm;
+      document.body.appendChild(a); a.click(); setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);
+    }
+    toast('Backup exportado ✓');
+  }catch(e){ toast('Falha ao exportar backup'); }
+}
+function triggerImport(){ document.getElementById('importInput').click(); }
+function handleImportFile(e){
+  var file=e.target.files&&e.target.files[0]; if(!file) return;
+  var rd=new FileReader();
+  rd.onload=function(){
+    try{
+      var obj=JSON.parse(rd.result);
+      if(!obj || typeof obj!=='object' || !('points' in obj)) throw new Error('Arquivo inválido');
+      var hasData = state.points && state.points.length>0;
+      var proceed = !hasData || confirm('Isso vai SUBSTITUIR a vistoria atual ('+state.points.length+' registros) pela do backup. Continuar?');
+      if(!proceed){ e.target.value=''; return; }
+      state=obj;
+      /* saneamento mínimo de campos que possam faltar em backups antigos */
+      state.points=state.points||[]; state.envs=state.envs||[];
+      if(!state.axisName) state.axisName='Pilar';
+      doSave();
+      refreshTopbar(); renderEnvChips(); refreshVistoriaHint(); resetForm();
+      closeConfig(); showScreen('scList','navList'); renderList();
+      toast('Backup importado ✓ ('+state.points.length+' registros)');
+    }catch(err){ toast('Não foi possível ler o backup: '+err.message); }
+    e.target.value='';
+  };
+  rd.onerror=function(){ toast('Falha ao ler o arquivo'); };
+  rd.readAsText(file);
+}
+
+/* ================= EXPORT EXCEL (formato Mercado Livre) =================
+   Usa ExcelJS -> imagens embutidas de verdade nas células. */
+var ML_INK='FF2D3277', ML_YEL='FFFFE600', ST_RED='FFE53935', ST_GREEN='FF2E9E5B';
+function exportExcel(){
+  if(state.points.length===0){ toast('Nenhum apontamento para exportar'); return; }
+  toast('Gerando Excel...');
+  setTimeout(function(){ buildWorkbook().catch(function(e){ console.error(e); toast('Erro ao gerar: '+e.message); }); }, 60);
+}
+function thin(){ return {top:{style:'thin',color:{argb:'FFBFBFBF'}},left:{style:'thin',color:{argb:'FFBFBFBF'}},bottom:{style:'thin',color:{argb:'FFBFBFBF'}},right:{style:'thin',color:{argb:'FFBFBFBF'}}}; }
+
+/* Recorta a foto no aspecto alvo (cover): centraliza e corta o excedente,
+   devolvendo base64 já no formato da célula (5,04 x 3,7 cm = paisagem 1,362:1). */
+var CELL_W_PX=190, CELL_H_PX=140;  // 5,04 x 3,7 cm @96dpi
+function coverCrop(dataUrl, cb){
+  var img=new Image();
+  img.onload=function(){
+    var tw=CELL_W_PX, th=CELL_H_PX, ta=tw/th;
+    var sw=img.width, sh=img.height, sa=sw/sh;
+    var cx,cy,cw,ch;
+    if(sa>ta){ ch=sh; cw=sh*ta; cx=(sw-cw)/2; cy=0; }   // fonte mais larga -> corta laterais
+    else     { cw=sw; ch=sw/ta; cx=0; cy=(sh-ch)/2; }   // fonte mais alta -> corta topo/base
+    var cv=document.createElement('canvas'); cv.width=tw; cv.height=th;
+    var ctx=cv.getContext('2d');
+    ctx.drawImage(img, cx,cy,cw,ch, 0,0,tw,th);
+    cb(cv.toDataURL('image/jpeg',0.82).split(',')[1]);
+  };
+  img.onerror=function(){ cb(null); };
+  img.src=dataUrl;
+}
+/* processa todas as fotos (original+correção) de uma vez, assíncrono */
+function prepareImages(pts, cb){
+  var jobs=[]; 
+  pts.forEach(function(p){
+    if(p.photo) jobs.push({p:p,key:'_imgMain',src:p.photo});
+    if(p.fixPhoto) jobs.push({p:p,key:'_imgFix',src:p.fixPhoto});
+  });
+  if(jobs.length===0){ cb(); return; }
+  var done=0;
+  jobs.forEach(function(j){
+    coverCrop(j.src, function(b64){ j.p[j.key]=b64; if(++done===jobs.length) cb(); });
+  });
+}
+
+async function buildWorkbook(){
+  /* pré-processa TODAS as fotos (recorte cover) antes de montar */
+  await new Promise(function(res){ prepareImages(state.points, res); });
+  var wb=new ExcelJS.Workbook();
+  wb.creator='OLLA ENGENHARIA'; wb.created=new Date();
+
+  /* ================= ABA RESUMO ================= */
+  var wsR=wb.addWorksheet('RESUMO',{views:[{showGridLines:false}]});
+  wsR.mergeCells('A1:F1');
+  var tR=wsR.getCell('A1'); tR.value='RESUMO — '+state.project;
+  tR.font={name:'Arial',size:15,bold:true,color:{argb:ML_INK}};
+  tR.alignment={horizontal:'center',vertical:'middle'};
+  tR.fill={type:'pattern',pattern:'solid',fgColor:{argb:ML_YEL}};
+  wsR.getRow(1).height=26;
+  var hr=wsR.getRow(3); ['ITEM','LOCAL','TOTAL','CONCLUÍDOS','PENDENTES','%'].forEach(function(h,i){
+    var c=hr.getCell(i+1); c.value=h; c.font={name:'Arial',size:10,bold:true,color:{argb:'FFFFFFFF'}};
+    c.fill={type:'pattern',pattern:'solid',fgColor:{argb:ML_INK}}; c.alignment={horizontal:'center'}; c.border=thin();
+  });
+  var rr=4;
+  state.envs.forEach(function(e,i){
+    var pts=state.points.filter(function(p){return p.env===e;});
+    var c=pts.filter(function(p){return p.status==='CONCLUIDO';}).length;
+    var row=wsR.getRow(rr++);
+    row.values=[i+1,e,pts.length,c,pts.length-c, pts.length?(c/pts.length):0];
+    for(var k=1;k<=6;k++){ row.getCell(k).border=thin(); row.getCell(k).font={name:'Arial',size:10}; row.getCell(k).alignment={horizontal:k===2?'left':'center'}; }
+    row.getCell(6).numFmt='0.0%';
+  });
+  var tot=state.points.length, totC=state.points.filter(function(p){return p.status==='CONCLUIDO';}).length;
+  var trow=wsR.getRow(rr++);
+  trow.values=['TOTAL','',tot,totC,tot-totC, tot?(totC/tot):0];
+  wsR.mergeCells('A'+(rr-1)+':B'+(rr-1));
+  for(var k=1;k<=6;k++){ trow.getCell(k).border=thin(); trow.getCell(k).font={name:'Arial',size:11,bold:true}; trow.getCell(k).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF2F2F2'}}; trow.getCell(k).alignment={horizontal:'center'}; }
+  trow.getCell(6).numFmt='0.0%';
+  wsR.columns=[{width:7},{width:34},{width:11},{width:13},{width:12},{width:9}];
+
+  /* ================= ABAS DE AMBIENTE ================= */
+  var PHOTO_COL_W=26.5;   // 5,04 cm
+  var ROW_H_PT=104.9;     // 3,7 cm
+  for(var ei=0; ei<state.envs.length; ei++){
+    var env=state.envs[ei];
+    var pts=state.points.filter(function(p){return p.env===env;});
+    var safe=env.substring(0,28).replace(/[\\/\?\*\[\]:]/g,'-');
+    var ws=wb.addWorksheet(safe,{views:[{showGridLines:false}]});
+    /* A item | B descrição | C foto checklist | D foto correção | E data verif | F referência | G status | H empresa | I obs */
+    ws.columns=[{width:7},{width:34},{width:PHOTO_COL_W},{width:PHOTO_COL_W},{width:13},{width:18},{width:13},{width:20},{width:22}];
+
+    /* título */
+    ws.mergeCells('A1:I2');
+    var tt=ws.getCell('A1'); tt.value='CHECK LIST';
+    tt.font={name:'Arial',size:22,bold:true,color:{argb:ML_INK}};
+    tt.alignment={horizontal:'center',vertical:'middle'};
+    ws.getRow(1).height=20; ws.getRow(2).height=20;
+    /* cabeçalho de dados obra/ref */
+    ws.getCell('A4').value='OBRA:'; ws.getCell('A4').font={name:'Arial',bold:true,size:10};
+    ws.getCell('B4').value=state.project; ws.getCell('B4').font={name:'Arial',size:10};
+    ws.getCell('A5').value='LOCAL:'; ws.getCell('A5').font={name:'Arial',bold:true,size:10};
+    ws.getCell('B5').value=state.local; ws.getCell('B5').font={name:'Arial',size:10};
+    ws.getCell('A6').value='DATA:'; ws.getCell('A6').font={name:'Arial',bold:true,size:10};
+    ws.getCell('B6').value=new Date().toLocaleDateString('pt-BR'); ws.getCell('B6').font={name:'Arial',size:10};
+    var nPend=pts.filter(function(p){return p.status==='PENDENTE';}).length;
+    var nConc=pts.filter(function(p){return p.status==='CONCLUIDO';}).length;
+    ws.getCell('G4').value='REFERÊNCIA:'; ws.getCell('G4').font={name:'Arial',bold:true,size:10};
+    ws.getCell('H4').value='CHECK LIST'; ws.getCell('H4').font={name:'Arial',size:10};
+    ws.getCell('G5').value='PENDENTE:'; ws.getCell('G5').font={name:'Arial',bold:true,size:10,color:{argb:ST_RED}};
+    ws.getCell('H5').value=nPend; ws.getCell('H5').font={name:'Arial',bold:true,size:10,color:{argb:ST_RED}};
+    ws.getCell('G6').value='CONCLUÍDO:'; ws.getCell('G6').font={name:'Arial',bold:true,size:10,color:{argb:ST_GREEN}};
+    ws.getCell('H6').value=nConc; ws.getCell('H6').font={name:'Arial',bold:true,size:10,color:{argb:ST_GREEN}};
+
+    /* header da tabela na linha 8 */
+    var HROW=8;
+    var heads=['ITEM','DESCRIÇÃO DAS PENDÊNCIAS','FOTO CHECK LIST','FOTO CORREÇÃO','DATA VERIFICAÇÃO','REFERÊNCIA ('+state.axisName.toUpperCase()+')','STATUS','EMPRESA - RESPONSÁVEL','OBSERVAÇÕES'];
+    var hrow=ws.getRow(HROW); hrow.height=30;
+    heads.forEach(function(h,i){
+      var c=hrow.getCell(i+1); c.value=h;
+      c.font={name:'Arial',size:9,bold:true,color:{argb:ML_INK}};
+      c.fill={type:'pattern',pattern:'solid',fgColor:{argb:ML_YEL}};
+      c.alignment={horizontal:'center',vertical:'middle',wrapText:true};
+      c.border={top:{style:'medium'},left:{style:'medium'},bottom:{style:'medium'},right:{style:'medium'}};
+    });
+
+    /* linhas de dados */
+    var first=HROW+1;
+    for(var idx=0; idx<pts.length; idx++){
+      var p=pts[idx]; var r=first+idx;
+      var row=ws.getRow(r); row.height=ROW_H_PT;
+      row.getCell(1).value=idx+1; row.getCell(1).alignment={horizontal:'center',vertical:'middle'};
+      row.getCell(2).value=p.desc||''; row.getCell(2).alignment={horizontal:'left',vertical:'middle',wrapText:true};
+      /* C = foto checklist, D = foto correção (embutidas abaixo) */
+      /* E = data verificação */
+      var fixDateTxt = p.fixDate ? p.fixDate.split('-').reverse().join('/') : '';
+      row.getCell(5).value=fixDateTxt; row.getCell(5).alignment={horizontal:'center',vertical:'middle'};
+      row.getCell(6).value=p.loc?(state.axisName+' '+p.loc):''; row.getCell(6).alignment={horizontal:'center',vertical:'middle'};
+      var sc=row.getCell(7); sc.value=p.status;
+      sc.font={name:'Arial',bold:true,color:{argb:p.status==='CONCLUIDO'?ST_GREEN:ST_RED}};
+      sc.alignment={horizontal:'center',vertical:'middle'};
+      sc.fill={type:'pattern',pattern:'solid',fgColor:{argb:p.status==='CONCLUIDO'?'FFE7F5EC':'FFFDECEA'}};
+      row.getCell(8).value=p.resp||''; row.getCell(8).alignment={horizontal:'left',vertical:'middle',wrapText:true};
+      row.getCell(9).value='';
+      for(var k=1;k<=9;k++){ row.getCell(k).border=thin(); if(!row.getCell(k).font) row.getCell(k).font={name:'Arial',size:10}; }
+      /* embutir foto checklist (col C = índice 2) preenchendo 100% da célula */
+      if(p._imgMain){
+        try{
+          var imgId=wb.addImage({base64:p._imgMain, extension:'jpeg'});
+          ws.addImage(imgId, { tl:{col:2, row:(r-1)}, br:{col:3, row:r}, editAs:'oneCell' });
+        }catch(e){ console.warn('img main fail', e); }
+      }
+      /* embutir foto correção (col D = índice 3) */
+      if(p._imgFix){
+        try{
+          var imgId2=wb.addImage({base64:p._imgFix, extension:'jpeg'});
+          ws.addImage(imgId2, { tl:{col:3, row:(r-1)}, br:{col:4, row:r}, editAs:'oneCell' });
+        }catch(e){ console.warn('img fix fail', e); }
+      }
+    }
+    /* congela cabeçalho e área de impressão */
+    ws.views=[{state:'frozen', ySplit:HROW, showGridLines:false}];
+    ws.pageSetup={orientation:'landscape', fitToPage:true, fitToWidth:1, fitToHeight:0, margins:{left:0.3,right:0.3,top:0.3,bottom:0.3,header:0.2,footer:0.2}};
+    ws.pageSetup.printArea='A1:I'+(first+pts.length-1);
+  }
+
+  var buf=await wb.xlsx.writeBuffer();
+  var fname='CHECKLIST_'+(state.project||'PROJETO').replace(/[^A-Za-z0-9]+/g,'_')+'.xlsx';
+  saveAs(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}), fname);
+  toast('Excel gerado ✓');
+}
+
+/* ================= BOOT ================= */
+(function boot(){
+  if(!('indexedDB' in window)){ toast('Navegador sem suporte a armazenamento — atualize o app'); }
+  renderPhotoBox(); renderFixPhotoBox && renderFixPhotoBox(); setStatus('PENDENTE');
+  load().then(function(had){
+    refreshTopbar(); renderEnvChips(); refreshVistoriaHint();
+    if(!had || !state.project || state.envs.length===0){ openConfig(); }
+  }).catch(function(e){
+    console.warn(e); refreshTopbar(); renderEnvChips(); refreshVistoriaHint(); openConfig();
+  });
+})();
+</script>
+</body>
+</html>
